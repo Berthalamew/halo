@@ -1,45 +1,144 @@
 /*
 HALOAUTOTEST.C
-
-symbols in this file:
-000BD840 0010:
-	_HATCleanup (0000)
-000BD850 0050:
-	_HATReadMain (0000)
-000BD8A0 0030:
-	_HATRawRead (0000)
-000BD8D0 0060:
-	_HATRawLoopRead (0000)
-000BD930 0030:
-	_HATRawWrite (0000)
-000BD960 0060:
-	_HATInit (0000)
-000BD9C0 0070:
-	_HATRun (0000)
-0026F368 000c:
-	??_C@_0M@IEEDBJHM@d?3?2loop?4xts?$AA@ (0000)
-0026F374 000c:
-	??_C@_0M@LJPJKHIH@d?3?2read?4xts?$AA@ (0000)
-0026F380 000d:
-	??_C@_0N@HAJBMPGP@d?3?2write?4xts?$AA@ (0000)
-0026F390 000e:
-	??_C@_0O@GABMNNJG@d?3?2state?4data?$AA@ (0000)
-004535B4 0008:
-	_bss_004535b4 (0000)
 */
 
 /* ---------- headers */
 
-/* ---------- constants */
-
-/* ---------- macros */
-
-/* ---------- structures */
-
-/* ---------- prototypes */
+#include "cseries.h"
+#include "cseries_windows.h"
+#include "HaloAutoTest.h"
+#include "integer_math.h"
+#include "input.h"
 
 /* ---------- globals */
 
+static struct
+{
+	HANDLE __unknown00;
+	unsigned long __unknown04;
+} bss_004535b4;
+
 /* ---------- public code */
 
-/* ---------- private code */
+void HATCleanup(
+	void)
+{
+	if (bss_004535b4.__unknown00)
+	{
+		CloseHandle(bss_004535b4.__unknown00);
+	}
+
+	return;
+}
+
+void HATReadMain(
+	void)
+{
+	if (GetFileAttributesA("d:\\write.xts")!=-1)
+	{
+		bss_004535b4.__unknown04= 0x03;
+	}
+	else if (GetFileAttributesA("d:\\read.xts")!=-1)
+	{
+		bss_004535b4.__unknown04= 0x04;
+	}
+	else if (GetFileAttributesA("d:\\loop.xts")!=-1)
+	{
+		bss_004535b4.__unknown04= 0x05;
+	}
+
+	return;
+}
+
+void HATRawRead(
+	struct gamepad_state *gamepad)
+{
+	DWORD number_of_bytes_read= 0;
+	ReadFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_read, 0);
+
+	return;
+}
+
+void HATRawLoopRead(
+	struct gamepad_state *gamepad)
+{
+	DWORD number_of_bytes_read= 0;
+	ReadFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_read, 0);
+
+	if (number_of_bytes_read==0)
+	{
+		SetFilePointer(bss_004535b4.__unknown00, 0, 0, 0);
+		ReadFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_read, 0);
+	}
+
+	return;
+}
+
+void HATRawWrite(
+	struct gamepad_state *gamepad)
+{
+	DWORD number_of_bytes_written= 0;
+	WriteFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_written, 0);
+
+	return;
+}
+
+void HATInit(
+	void)
+{
+	HATReadMain();
+
+	if (bss_004535b4.__unknown04==0x03)
+	{
+		bss_004535b4.__unknown00= CreateFileA(
+			"d:\\state.data",
+			GENERIC_WRITE,
+			0,
+			0,
+			CREATE_ALWAYS,
+			FILE_FLAG_SEQUENTIAL_SCAN,
+			NULL);
+	}
+	else if (bss_004535b4.__unknown04==0x04||bss_004535b4.__unknown04==0x05)
+	{
+		bss_004535b4.__unknown00= CreateFileA(
+			"d:\\state.data",
+			GENERIC_READ,
+			0,
+			0,
+			OPEN_EXISTING,
+			FILE_FLAG_SEQUENTIAL_SCAN,
+			NULL);
+	}
+
+	return;
+}
+
+void HATRun(
+	struct gamepad_state *gamepad)
+{
+	switch (bss_004535b4.__unknown04)
+	{
+	case 0x03:
+	{
+		DWORD number_of_bytes_written= 0;
+		WriteFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_written, 0);
+		break;
+	}
+	case 0x04:
+	{
+		DWORD number_of_bytes_read= 0;
+		ReadFile(bss_004535b4.__unknown00, gamepad, 0x28, &number_of_bytes_read, 0);
+		break;
+	}
+	case 0x05:
+	{
+		HATRawLoopRead(gamepad);
+		break;
+	}
+	default:
+		break;
+	}
+
+	return;
+}
