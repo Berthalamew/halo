@@ -31,6 +31,13 @@ union real_point3d
 };
 typedef union real_point3d real_point3d;
 
+union real_vector3d
+{
+	real n[3];
+	struct { real i, j, k; };
+};
+typedef union real_vector3d real_vector3d;
+
 union real_rgb_color
 {
 	real n[3];

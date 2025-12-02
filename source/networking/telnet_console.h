@@ -14,7 +14,9 @@ header included in hcex build.
 
 /* ---------- structures */
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/TELNET_CONSOLE.C */
+
+void telnet_console_process(void);
 
 /* ---------- globals */
 

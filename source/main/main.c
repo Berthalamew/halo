@@ -331,16 +331,578 @@ symbols in this file:
 
 /* ---------- headers */
 
+#include "cseries.h"
+#include "main.h"
+#include "real_math.h"
+#include "game.h"
+#include "integer_math.h"
+#include "input.h"
+#include "shell.h"
+#include "event_manager.h"
+#include "telnet_console.h"
+#include "ui_widget.h"
+#include "editor_stubs.h"
+#include "console.h"
+#include "debug_keys.h"
+#include "scenario.h"
+
 /* ---------- constants */
 
 /* ---------- macros */
 
 /* ---------- structures */
 
+/*
+struct _main_globals
+{
+	long long last_time_clocks; // 0x0
+	unsigned long last_time_msec; // 0x8
+	long long last_render_clocks; // 0x10
+	long long last_vblank_index; // 0x18
+	long long last_initial_vblank_index; // 0x20
+	long long last_achievable_vblank_index; // 0x28
+	long long last_present_vblank_index; // 0x30
+	unsigned char did_time_overflow_occur; // 0x38
+	float seconds_elapsed; // 0x3C
+	short connection; // 0x40
+	unsigned short screenshot_identifier; // 0x42
+	bitmap_data *movie; // 0x44
+	long recording_start_tick; // 0x48
+	long recording_stop_tick; // 0x4C
+	long recording_frame_index; // 0x50
+	float recording_dt; // 0x54
+	unsigned char reset_map; // 0x58
+	unsigned char rename_map; // 0x59
+	unsigned char revert_map; // 0x5A
+	unsigned char skip_cinematic; // 0x5B
+	unsigned char save_map; // 0x5C
+	unsigned char save_map_safely; // 0x5D
+	unsigned char save_map_timeout; // 0x5E
+	unsigned char saving_map; // 0x5F
+	long ticks_until_next_save_check; // 0x60
+	long ticks_unable_to_save; // 0x64
+	unsigned long map_change_load_timer; // 0x68
+	short safe_intervals; // 0x6C
+	unsigned char won_map; // 0x6E
+	unsigned char lost_map; // 0x6F
+	unsigned char respawn; // 0x70
+	unsigned char save_core; // 0x71
+	unsigned char load_core; // 0x72
+	unsigned char load_core_at_startup; // 0x73
+	short switch_to_structure_bsp_index; // 0x74
+	unsigned char main_menu_scenario_loaded; // 0x76
+	unsigned char want_to_be_at_main_menu; // 0x77
+	unsigned char run_xdemos; // 0x78
+	unsigned char fade_to_dashboard; // 0x79
+	unsigned char exit_to_dashboard; // 0x7A
+	unsigned char want_to_exit; // 0x7B
+	long idle_timeout; // 0x7C
+	long idle_last_interesting; // 0x80
+	long idle_last_activity; // 0x84
+	unsigned char playback_last_recording; // 0x88
+	unsigned char halt_time_scale; // 0x89
+	unsigned char restart_time; // 0x8A
+	unsigned char load_last_solo_level; // 0x8B
+	unsigned char cutscene_skip; // 0x8C
+	short skip_ticks; // 0x8E
+	short loss_timer; // 0x90
+	short respawn_timer; // 0x92
+	unsigned char queue_map; // 0x94
+	unsigned char pad0[3]; // 0x95
+	unsigned char solo_try_and_load_from_persistent_storage; // 0x98
+	char soloplayer_map_name[256]; // 0x99
+	char multiplayer_map_name[256]; // 0x199
+	char queued_map_name[256]; // 0x299
+	unsigned char want_to_connect; // 0x399
+	char connect_address[32]; // 0x39A
+	char connect_password[9]; // 0x3BA
+	short vblank_interval_current; // 0x3C4
+	short vblank_interval_minimum; // 0x3C6
+	unsigned char vblank_interval_held; // 0x3C8
+	short vblank_failure_count[6]; // 0x3CA
+	long long vblank_last_failure_time[6]; // 0x3D8
+	unsigned long *vblank_flip_counter; // 0x408
+	short vblank_flip_delta_next_index; // 0x40C
+	short vblank_flip_deltas[15]; // 0x40E
+};
+*/
+
+struct _main_globals
+{
+	byte __unknown00[216];
+	real seconds_elapsed;
+	short connection;
+	byte __unknownDE[22];
+	boolean reset_map;
+	boolean rename_map;
+	boolean revert_map;
+	boolean skip_cinematic;
+	boolean save_map;
+	boolean save_map_safely;
+	boolean save_map_timeout;
+	boolean saving_map;
+	long ticks_until_next_save_check;
+	long ticks_unable_to_save;
+	unsigned long map_change_load_timer;
+	short safe_intervals;
+	boolean won_map;
+	boolean lost_map;
+	boolean respawn;
+	boolean save_core;
+	boolean load_core;
+	boolean load_core_at_startup;
+	short switch_to_structure_bsp_index;
+	boolean __unknown112;
+	boolean want_to_be_at_main_menu;
+	boolean run_xdemos;
+	byte __unknown115;
+	boolean halt_time_scale;
+	byte __unknown117[0x9];
+	boolean queue_map;
+	byte __unknown121[0x4];
+	boolean solo_try_and_load_from_persistent_storage;
+	char soloplayer_map_name[256];
+	char multiplayer_map_name[256];
+	char queued_map_name[256];
+	byte __unknown125[682];
+};
+
 /* ---------- prototypes */
+
+extern void code_000ef8e0(void);
+extern void code_000f1c20(void);
+extern void code_000f1ce0(void);
+
+extern void main_rasterizer_throttle(void);
+extern void main_pregame_render(void);
+extern void main_present_frame(void);
 
 /* ---------- globals */
 
+static struct _main_globals bss_00455750;
+
 /* ---------- public code */
+
+static void code_000f08f0(
+	void)
+{
+	if (!game_time_get_paused())
+	{
+		scenario_switch_structure_bsp(0);
+		game_dispose_from_old_map();
+		input_flush();
+		game_initialize_for_new_map();
+		code_000ef8e0();
+		game_time_start();
+		game_initial_pulse();
+		ui_widgets_disable_pause_game(30);
+
+		bss_00455750.reset_map= FALSE;
+	}
+}
+
+void main_loop_of_death(
+	void)
+{
+	while (TRUE)
+	{
+		input_frame_begin();
+		input_update();
+		shell_idle();
+		event_manager_update();
+		telnet_console_process();
+		process_ui_widgets();
+		main_pregame_render();
+		main_rasterizer_throttle();
+		main_present_frame();
+		input_frame_end();
+	}
+}
+
+void main_loop(
+	void)
+{
+	if (!game_in_editor())
+	{
+		strncpy(bss_00455750.soloplayer_map_name, "levels\\b30\\b30", NUMBEROF(bss_00455750.soloplayer_map_name)-1);
+		bss_00455750.soloplayer_map_name[NUMBEROF(bss_00455750.soloplayer_map_name)-1]= '\0';
+	}
+
+	bss_00455750.want_to_be_at_main_menu= (game_in_editor()==FALSE);
+	bss_00455750.switch_to_structure_bsp_index= NONE;
+	bss_00455750.halt_time_scale= TRUE;
+
+	console_initialize();
+	debug_keys_initialize();
+	game_initialize();
+	console_startup();
+	code_000f1c20();
+	code_000f1ce0();
+
+	while (TRUE)
+	{
+		if (game_in_editor())
+		{
+			if (bss_00455750.reset_map)
+			{
+				code_000f08f0();
+			}
+		}
+		else
+		{
+			if (bss_00455750.switch_to_structure_bsp_index!=NONE)
+			{
+				scenario_switch_structure_bsp(bss_00455750.switch_to_structure_bsp_index);
+				bss_00455750.switch_to_structure_bsp_index= NONE;
+				hud_load(0);
+			}
+
+			if (bss_00455750.lost_map)
+			{
+
+			}
+
+			if (bss_00455750.won_map)
+			{
+
+			}
+
+			if (bss_00455750.respawn)
+			{
+
+			}
+
+			if (bss_00455750.saving_map)
+			{
+
+			}
+
+			if (bss_00455750.rename_map)
+			{
+
+			}
+
+			if (bss_00455750.revert_map)
+			{
+
+			}
+
+			if (bss_00455750.skip_cinematic)
+			{
+
+			}
+
+			if (bss_00455750.reset_map)
+			{
+				code_000f08f0();
+			}
+
+			if (bss_00455750.save_core)
+			{
+				//game_state_save_core(bss_00455750.__unknown125);
+				bss_00455750.save_core= FALSE;
+			}
+
+			if (bss_00455750.load_core)
+			{
+				//game_state_save_core(bss_00455750.__unknown125);
+				bss_00455750.load_core= FALSE;
+			}
+
+			if (bss_00455750.want_to_be_at_main_menu)
+			{
+				main_menu_load();
+			}
+
+			if (bss_00455750.__unknown117[1])
+			{
+				main_load_last_solo_map();
+			}
+
+			if (bss_00455750.run_xdemos)
+			{
+				bss_00455750.run_xdemos= FALSE;
+				xbox_demos_launch();
+			}
+
+			if (bss_00455750.__unknown117[2])
+			{
+				code_000f05f0();
+			}
+
+			if (bss_00455750.queue_map)
+			{
+				//bss_00455750.queue_map= FALSE;
+			}
+		}
+
+		profile_frame_start();
+		input_frame_begin();
+		input_update();
+		input_abstraction_update();
+		shell_idle();
+		event_manager_update();
+		telnet_console_process();
+
+		if (!shell_application_is_paused())
+		{
+			if (bss_00455750.connection==1)
+			{
+
+			}
+
+//            int32_t eax_9 = (int32_t)data_85582c;
+//            (uint8_t)ebx = 1;
+//            
+//            if (eax_9 == 1)
+//            {
+//                if (!sub_519b20(ecx_1))
+//                {
+//                    sub_4d3c50(6);
+//                    var_1c = "the game host went down";
+//                    sub_47da00(2, "the game host went down");
+//                    sub_519fd0();
+//                }
+//            }
+//            else if (eax_9 == 2)
+//            {
+//                char eax_11 = sub_519b20(ecx_1);
+//                char eax_12;
+//                
+//                if (eax_11)
+//                    eax_12 = sub_519a60();
+//                
+//                if (!eax_11 || !eax_12)
+//                {
+//                    sub_4d3c50(1);
+//                    var_1c = "the game host went down";
+//                    sub_47da00(2, "the game host went down");
+//                    sub_519fd0();
+//                }
+//            }
+//            else if (eax_9 == 3)
+//            {
+//                sub_47da00(2, "end of saved film");
+//                int32_t eax_35 = (int32_t)data_85582c;
+//                
+//                if (eax_35 == 1)
+//                    sub_519af0();
+//                else if (eax_35 == 2)
+//                {
+//                    sub_519af0();
+//                    sub_519a30();
+//                }
+//                
+//                sub_4956c0();
+//                sub_495370();
+//                sub_4ef490();
+//                sub_4ef1d0();
+//                return;
+//            }
+//            
+//            sub_4f0bf0();
+//            sub_4d8bd0();
+//            sub_5b6360();
+//            
+//            if (sub_485e60())
+//            {
+//            label_4f2a3e:
+//                
+//                if (sub_485e80())
+//                    goto label_4f2a47;
+//            }
+//            else
+//            {
+//                if (!sub_4be900(0x55))
+//                {
+//                    if (sub_4be900(0))
+//                        goto label_4f2a47;
+//                    
+//                    goto label_4f2a3e;
+//                }
+//                
+//            label_4f2a47:
+//                void* eax_17 = data_855830;
+//                
+//                if (eax_17)
+//                {
+//                    sub_46af60(eax_17);
+//                    data_855830 = 0;
+//                }
+//                
+//                char eax_18 = sub_4974e0();
+//                
+//                if (!eax_18)
+//                {
+//                    data_855860 = 0xffff;
+//                    data_855848 = eax_18;
+//                    data_855844 = 1;
+//                    data_85585b = eax_18;
+//                }
+//            }
+//            
+//            if (!sub_4a4f50())
+//            {
+//                sub_47fb80();
+//                    sub_4f18b0(st0_1);
+//                top += 1;
+//                sub_47fbb0();
+//            }
+//            else
+//            {
+//                sub_4d3160();
+//                char eax_20;
+//                int32_t ecx_2;
+//                eax_20 = sub_4ef1f0();
+//                
+//                if (!eax_20 || data_85582c)
+//                {
+//                    sub_4ef4c0(ecx_2);
+//                    sub_494c90();
+//                    uint32_t ecx_3 = (uint32_t)data_855866;
+//                    uint32_t var_8_1 = ecx_3;
+//                    uint32_t var_18_4 = ecx_3;
+//                        /*   unimplemented  {fild st0, dword [ebp-0x4]} */
+//                        /*   unimplemented  {fmul st0, dword [&data_855828]} */
+//                        float var_18_5 = (float)/*   float var_18_5 =
+//                        fconvert.s(unimplemented  {fstp dword [esp], st0}) */;
+//                    /*   unimplemented  {fstp dword [esp], st0} */
+//                    int32_t ecx_4 = sub_4a7fe0(var_18_5);
+//                    int32_t eax_21 = (int32_t)data_85582c;
+//                    
+//                    if (eax_21 > 0 && eax_21 <= 2)
+//                    {
+//                        char eax_22;
+//                        eax_22 = sub_519d50();
+//                        
+//                        if (!eax_22)
+//                        {
+//                            ecx_4 = sub_4d3c50(1);
+//                            sub_519fd0();
+//                        }
+//                    }
+//                    
+//                    uint32_t var_8_2 = (uint32_t)data_855866;
+//                    int32_t var_18_6 = ecx_4;
+//                        /*   unimplemented  {fild st0, dword [ebp-0x4]} */
+//                        /*   unimplemented  {fmul st0, dword [&data_855828]} */
+//                        float var_18_7 = (float)/*   float var_18_7 =
+//                        fconvert.s(unimplemented  {fstp dword [esp], st0}) */;
+//                    /*   unimplemented  {fstp dword [esp], st0} */
+//                    sub_4a5390(var_18_7);
+//                    
+//                    if (data_855862)
+//                        (uint8_t)ebx = 1;
+//                    else if (!data_855866)
+//                        (uint8_t)ebx = 0;
+//                    else if (sub_4a4fa0())
+//                        (uint8_t)ebx = 1;
+//                    else if (sub_4a4e50() > 0)
+//                        (uint8_t)ebx = 1;
+//                    else
+//                    {
+//                            sub_4a5030();
+//                        /*   unimplemented  {call sub_4a5030} */
+//                          long double temp3_1 = (long double)1f;
+//                        /*   unimplemented  {fcomp st0, dword [&data_642f64[4]]}
+//                            f- temp3_1 */ - temp3_1;
+//                        bool c0_1 = /*   bool c0_1 =
+//                            unimplemented  {fcomp st0, dword [&data_642f64[4]]}
+//                            f< temp3_1 */ < temp3_1;
+//                        bool c2_1 = FCMP_UO(/*   bool c2_1 = is_unordered.t(
+//                            unimplemented  {fcomp st0, dword [&data_642f64[4]]}, 
+//                            temp3_1) */, temp3_1);
+//                        bool c3_1 = /*   bool c3_1 =
+//                            unimplemented  {fcomp st0, dword [&data_642f64[4]]}
+//                            f== temp3_1 */ == temp3_1;
+//                        /*   unimplemented  {fcomp st0, dword [&data_642f64[4]]} */
+//                        int32_t eax_26;
+//                        (uint16_t)eax_26 = (c0_1 ? 1 : 0) << 8 | (c2_1 ? 1 : 0) << 0xa
+//                            | (c3_1 ? 1 : 0) << 0xe | (top & 7) << 0xb;
+//                            bool p_1 = /*   bool p_1 = unimplemented  {test ah, 0x5} */;
+//                        
+//                        if (!p_1)
+//                            (uint8_t)ebx = 1;
+//                        else
+//                            (uint8_t)ebx = 0;
+//                    }
+//                    
+//                    char eax_27 = sub_4974e0();
+//                    int32_t eax_28;
+//                    
+//                    if (eax_27)
+//                        eax_28 = sub_4a4e10();
+//                    
+//                    char eax_29;
+//                    
+//                    eax_29 = !eax_27 || eax_28 >= 3 ? 1 : 0;
+//                    
+//                    (uint8_t)ebx &= eax_29;
+//                    sub_53c970(1);
+//                    uint32_t var_8_3 = (uint32_t)data_855866;
+//                        /*   unimplemented  {fild st0, dword [ebp-0x4]} */
+//                        /*   unimplemented  {fmul st0, dword [&data_855828]} */
+//                        float var_18_8 = (float)/*   float var_18_8 =
+//                        fconvert.s(unimplemented  {fstp dword [esp], st0}) */;
+//                    /*   unimplemented  {fstp dword [esp], st0} */
+//                    sub_475c60(var_18_8);
+//                    uint32_t var_8_4 = (uint32_t)data_855866;
+//                        /*   unimplemented  {fild st0, dword [ebp-0x4]} */
+//                        /*   unimplemented  {fmul st0, dword [&data_855828]} */
+//                        float var_18_9 = (float)/*   float var_18_9 =
+//                        fconvert.s(unimplemented  {fstp dword [esp], st0}) */;
+//                    /*   unimplemented  {fstp dword [esp], st0} */
+//                    sub_47b450(var_18_9);
+//                    sub_53c990();
+//                    uint32_t var_8_5 = (uint32_t)data_855866;
+//                        /*   unimplemented  {fild st0, dword [ebp-0x4]} */
+//                        /*   unimplemented  {fmul st0, dword [&data_855828]} */
+//                      float var_18_10 = (float)/*   float var_18_10 =
+//                        fconvert.s(unimplemented  {fstp dword [esp], st0}) */;
+//                    /*   unimplemented  {fstp dword [esp], st0} */
+//                    top = top;
+//                    sub_49b5c0(var_18_10);
+//                }
+//                
+//                if (data_855848)
+//                    sub_4f06c0();
+//                
+//                if ((uint8_t)ebx && !data_855e21)
+//                {
+//                    sub_47fb80();
+//                        /*   unimplemented  {fld st0, dword [&data_855828]} */
+//                      var_1c = (double)/*   var_1c.q =
+//                        fconvert.d(unimplemented  {fstp qword [esp], st0}) */;
+//                    /*   unimplemented  {fstp qword [esp], st0} */
+//                    sub_4f24a0();
+//                    sub_47fbb0();
+//                }
+//            }
+//            
+//            sub_4f1190();
+//            
+//            if ((uint8_t)ebx && !data_855e21)
+//                sub_4f1b90();
+		}
+
+		input_frame_end();
+		profile_frame_end();
+		code_000f0940();
+		
+		if (bss_00455750.__unknown117[0])
+		{
+			//main_globals.__unknown117[0] = 0;
+			//*(_DWORD *)&main_globals.__unknown00[176] = system_milliseconds();
+			//*(_DWORD *)&main_globals.__unknown00[184] = dword_70D400;
+			//*(_DWORD *)&main_globals.__unknown00[188] = dword_70D404;
+			bss_00455750.halt_time_scale= TRUE;
+		}
+	}
+
+	game_dispose_from_old_map();
+	game_dispose();
+	debug_keys_dispose();
+	console_dispose();
+}
 
 /* ---------- private code */

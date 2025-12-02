@@ -14,7 +14,9 @@ header included in hcex build.
 
 /* ---------- structures */
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/EVENT_MANAGER.C */
+
+void event_manager_update(void);
 
 /* ---------- globals */
 
