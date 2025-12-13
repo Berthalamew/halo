@@ -132,6 +132,19 @@ void system_exit(long code);
 
 void halt_and_catch_fire(void);
 
+/* ---------- prototypes/DEBUG_MEMORY.C */
+
+void debug_memory_manager_initialize(void);
+/*void debug_memory_manager_dispose(void);*/
+void check_memory_status(struct memory_status *, const char *);
+void debug_check_memory(const char *, long);
+void debug_dump_memory_for_file(const char *);
+void debug_dump_memory_by_file(void);
+void *debug_malloc(unsigned int, boolean, const char *, long);
+void debug_free(void *, const char *, long);
+void *debug_realloc(void *, unsigned int, boolean, const char *, long);
+void debug_dump_memory(void);
+
 /* ---------- macros */
 
 #ifndef BUILDING_CSERIES
@@ -147,6 +160,15 @@ void halt_and_catch_fire(void);
 #define strlen csstrlen
 #define strcpy csstrcpy
 #define memcpy csmemcpy
+
+#define match_malloc(size, file, line) debug_malloc(size, FALSE, MATCH_FILE(file), MATCH_LINE(line))
+#define match_free(ptr, file, line) debug_free(ptr, MATCH_FILE(file), MATCH_LINE(line))
+#define match_realloc(ptr, size, file, line) debug_realloc(ptr, size, FALSE, MATCH_FILE(file), MATCH_LINE(line))
+
+#define malloc(size) match_malloc(size, __FILE__, __LINE__)
+#define free(size) match_free(ptr, __FILE__, __LINE__)
+#define free(ptr, size) match_realloc(ptr, size, __FILE__, __LINE__)
+
 #endif
 
 #endif // __CSERIES_H
