@@ -112,7 +112,7 @@ struct file_reference_info
 
 struct file_reference
 {
-	char data[MAXIMUM_FILENAME_LENGTH+1];
+	char data[FILE_REFERENCE_SIZE];
 };
 
 /* ---------- prototypes/FILES.C */
