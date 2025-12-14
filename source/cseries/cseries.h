@@ -10,6 +10,7 @@ CSERIES.H
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stdarg.h>
 
 /* ---------- constants */
 
@@ -83,6 +84,8 @@ enum
 #define FLAG(b) (1<<(b))
 #define TEST_FLAG(flags, bit) ((flags)&(unsigned)FLAG(bit))
 #define SET_FLAG(f, b, v) ((v) ? ((f)|=(unsigned)FLAG(b)) : ((f)&=(unsigned)~FLAG(b)))
+
+#define VALID_FLAGS(flags, bits) (!((flags)>>bits))
 
 #define NUMBEROF(array) (sizeof(array) / sizeof(array[0]))
 
@@ -167,8 +170,7 @@ void debug_dump_memory(void);
 
 #define malloc(size) match_malloc(size, __FILE__, __LINE__)
 #define free(size) match_free(ptr, __FILE__, __LINE__)
-#define free(ptr, size) match_realloc(ptr, size, __FILE__, __LINE__)
-
+#define realloc(ptr, size) match_realloc(ptr, size, __FILE__, __LINE__)
 #endif
 
 #endif // __CSERIES_H
