@@ -33,7 +33,9 @@ struct data_reference
 
 /* ---------- public code */
 
-__inline struct data_array *reference_list_new(const char *name, short maximum_count)
+__inline struct data_array *reference_list_new(
+	const char *name,
+	short maximum_count)
 {
 	char buffer[256];
 
@@ -41,10 +43,13 @@ __inline struct data_array *reference_list_new(const char *name, short maximum_c
 	return game_state_data_new(buffer, maximum_count, sizeof(struct data_reference));
 }
 
-__inline long reference_list_get_next_datum_index(struct data_array *array, long *reference_index)
+__inline long reference_list_get_next_datum_index(
+	struct data_array *array,
+	long *reference_index)
 {
 	long result;
 	struct data_reference *reference;
+
 	if (*reference_index!=NONE)
 	{
 		reference= (struct data_reference *)datum_get(array, *reference_index);
@@ -55,12 +60,17 @@ __inline long reference_list_get_next_datum_index(struct data_array *array, long
 	{
 		result= NONE;
 	}
+
 	return result;
 }
 
-__inline void reference_list_add(struct data_array *array, long *first_reference_index, long datum_index)
+__inline void reference_list_add(
+	struct data_array *array,
+	long *first_reference_index,
+	long datum_index)
 {
 	long reference_index= datum_new(array);
+
 	if (reference_index!=NONE)
 	{
 		struct data_reference *reference= (struct data_reference*)datum_get(array, reference_index);
@@ -72,10 +82,13 @@ __inline void reference_list_add(struct data_array *array, long *first_reference
 	{
 		error(_error_silent, "WARNING: maximum %ss per map (%d) exceeded.", array->name, array->maximum_count);
 	}
+
 	return;
 }
 
-__inline void reference_list_delete(struct data_array *array, long first_reference_index)
+__inline void reference_list_delete(
+	struct data_array *array,
+	long first_reference_index)
 {
 	long i;
 	struct data_reference *reference;
@@ -85,6 +98,7 @@ __inline void reference_list_delete(struct data_array *array, long first_referen
 		reference= (struct data_reference*)datum_get(array, i);
 		datum_delete(array, i);
 	}
+
 	return;
 }
 
