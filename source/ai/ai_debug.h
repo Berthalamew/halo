@@ -18,7 +18,7 @@ struct ai_debug_state
 {
 	boolean field_0;
 	boolean select_actor;
-	char gap[547626];
+	char __unknown02[547626];
 };
 
 /* ---------- prototypes/AI_DEBUG.C */
@@ -27,6 +27,7 @@ void ai_debug_initialize_for_new_map(void);
 
 /* ---------- globals */
 
+/* comm */
 struct ai_debug_state ai_debug;
 
 /* ---------- public code */

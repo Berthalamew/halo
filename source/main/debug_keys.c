@@ -107,9 +107,9 @@ struct debug_key global_debug_key_list[10] =
 void debug_keys_initialize(
 	void)
 {
-	long key_count= 0;
+	long key_count;
 
-	for (key_count; global_debug_key_list[key_count].name; key_count++)
+	for (key_count= 0; global_debug_key_list[key_count].name; key_count++)
 	{
 		if (global_debug_key_list[key_count].variable)
 		{
@@ -120,6 +120,7 @@ void debug_keys_initialize(
 	global_debug_key_down= (long*)match_malloc("c:\\halo\\SOURCE\\main\\debug_keys.c", 88, BIT_VECTOR_SIZE_IN_BYTES(key_count));
 	match_assert("c:\\halo\\SOURCE\\main\\debug_keys.c", 89, global_debug_key_down);
 	memset(global_debug_key_down, 0, BIT_VECTOR_SIZE_IN_BYTES(key_count));
+
 	return;
 }
 
@@ -131,6 +132,7 @@ void debug_keys_dispose(
 		debug_free(global_debug_key_down, "c:\\halo\\SOURCE\\main\\debug_keys.c", 100);
 		global_debug_key_down= NULL;
 	}
+
 	return;
 }
 
@@ -164,7 +166,7 @@ void debug_keys_update(
 		{
 			if (!down)
 			{
-				BIT_VECTOR_SET_FLAG(global_debug_key_down, key_index, TRUE);
+				BIT_VECTOR_SET_FLAG(global_debug_key_down, key_index, FALSE);
 				if (global_debug_key_list[key_index].toggle_variable &&
 					global_debug_key_list[key_index].variable)
 				{
@@ -199,6 +201,7 @@ static void debug_key_select_actor(
 	{
 		ai_debug.select_actor= TRUE;
 	}
+
 	return;
 }
 
@@ -209,6 +212,7 @@ static void debug_key_select_next_encounter(
 	{
 		ai_debug_change_selected_encounter(TRUE);
 	}
+
 	return;
 }
 
@@ -219,6 +223,7 @@ static void debug_key_select_prev_encounter(
 	{
 		ai_debug_change_selected_encounter(FALSE);
 	}
+
 	return;
 }
 
@@ -229,6 +234,7 @@ static void debug_key_select_next_actor(
 	{
 		ai_debug_change_selected_actor(TRUE);
 	}
+
 	return;
 }
 
@@ -239,6 +245,7 @@ static void debug_key_select_prev_actor(
 	{
 		ai_debug_change_selected_actor(FALSE);
 	}
+
 	return;
 }
 
@@ -249,6 +256,7 @@ static void debug_key_show_actor_spray(
 	{
 		ai_profile_change_render_spray();
 	}
+
 	return;
 }
 
@@ -259,6 +267,7 @@ static void debug_key_profile_reset(
 	{
 		profile_initialize();
 	}
+
 	return;
 }
 
@@ -269,6 +278,7 @@ static void debug_key_erase_all_actors(
 	{
 		ai_scripting_erase_all();
 	}
+
 	return;
 }
 
