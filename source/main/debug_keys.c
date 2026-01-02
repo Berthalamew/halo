@@ -60,6 +60,8 @@ symbols in this file:
 #include "debug_keys.h"
 
 #include "ai/ai_debug.h"
+#include "ai/ai_profile.h"
+#include "cseries/profile.h"
 #include "math/integer_math.h"
 #include "input/input.h"
 

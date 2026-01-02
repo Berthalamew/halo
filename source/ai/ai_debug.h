@@ -25,6 +25,11 @@ struct ai_debug_state
 
 void ai_debug_initialize_for_new_map(void);
 
+void ai_debug_change_selected_encounter(boolean a1);
+
+void ai_debug_change_selected_actor(boolean a1);
+
+
 /* ---------- globals */
 
 /* comm */
