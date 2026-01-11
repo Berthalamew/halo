@@ -94,6 +94,12 @@ enum
 
 #define NUMBEROF(array) (sizeof(array) / sizeof(array[0]))
 
+#define VALID_INDEX(index, count) (index>=0 && index<count)
+
+#define DATUM_INDEX_NEW(absolute_index, salt) (((salt)<<SHORT_BITS) | (absolute_index))
+#define DATUM_INDEX_TO_ABSOLUTE_INDEX(datum_index) ((word)((datum_index)&UNSIGNED_SHORT_MAX))
+#define DATUM_INDEX_TO_IDENTIFIER(datum_index) ((word)((datum_index)>>SHORT_BITS))
+
 /* ---------- fixed math */
 
 #define SHORT_FIXED_TO_LONG(f) ((f)>>CHAR_BITS)

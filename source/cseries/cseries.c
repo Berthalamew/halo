@@ -131,6 +131,7 @@ symbols in this file:
 
 /* ---------- headers */
 
+#include "cseries.h"
 #include "math/real_math.h"
 
 /* ---------- constants */

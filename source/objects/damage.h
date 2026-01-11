@@ -14,7 +14,12 @@ header included in hcex build.
 
 /* ---------- structures */
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/DAMAGE.C */
+
+void damage_initialize(void);
+void damage_dispose(void);
+void damage_initialize_for_new_map(void);
+void damage_dispose_from_old_map(void);
 
 /* ---------- globals */
 

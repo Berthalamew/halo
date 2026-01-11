@@ -14,7 +14,9 @@ header included in hcex build.
 
 /* ---------- structures */
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/EFFECTS.C */
+
+void effect_delete(long effect_index);
 
 /* ---------- globals */
 

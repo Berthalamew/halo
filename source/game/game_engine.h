@@ -14,7 +14,9 @@ header included in hcex build.
 
 /* ---------- structures */
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/GAME_ENGINE.C */
+
+boolean game_engine_running(void);
 
 /* ---------- globals */
 
