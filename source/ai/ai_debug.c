@@ -99,8 +99,8 @@ static char const *postcombat_type_strings[NUMBER_OF_ACTOR_POSTCOMBAT_ACTIONS] =
 	"celebrate"
 };
 
-static long global_ai_debug_selected_squad_index = NONE;
-static long global_ai_debug_selected_squad_time = NONE;
+static long global_ai_debug_selected_encounter_index = NONE;
+static long global_ai_debug_selected_encounter_time = NONE;
 static unsigned long global_ai_debug_activation_cluster_bit_vector[16];
 
 const real_argb_color global_ai_debug_firing_position_colors[] =
@@ -133,7 +133,7 @@ void ai_debug_initialize(
 	memset(&ai_debug, 0, sizeof(ai_debug));
 	
 	ai_debug.selected_actor_index = NONE;
-	ai_debug.selected_squad_index = NONE;
+	ai_debug.selected_encounter_index = NONE;
 	ai_debug.last_render_id = 1;
 	ai_debug.render = TRUE;
 
@@ -168,11 +168,11 @@ void ai_debug_dispose_from_old_map(
 {
 	struct scenario *scenario = global_scenario_try_and_get();
 
-	if (scenario && ai_debug.selected_squad_index!=NONE)
+	if (scenario && ai_debug.selected_encounter_index!=NONE)
 	{
 		struct encounter_definition* encounter = TAG_BLOCK_GET_ELEMENT(
 			&scenario->ai_encounters,
-			DATUM_INDEX_TO_ABSOLUTE_INDEX(ai_debug.selected_squad_index),
+			DATUM_INDEX_TO_ABSOLUTE_INDEX(ai_debug.selected_encounter_index),
 			struct encounter_definition);
 		
 		strncpy(ai_debug.selected_squad_name, encounter->name, NUMBEROF(ai_debug.selected_squad_name));
@@ -239,7 +239,150 @@ struct path_debug_storage *ai_debug_get_last_path(
 		}
 	}
 
-	return found_path_index!=NONE ? &actor_path_debug_array[found_path_index] : NULL;
+	return found_path_index==NONE ? NULL : &actor_path_debug_array[found_path_index];
+}
+
+struct path_debug_storage *ai_debug_get_path_storage(
+	long actor_index)
+{
+	short path_index;
+
+	struct path_debug_storage *found_path = NULL;
+	short found_path_index = NONE;
+
+	for (path_index = 0; path_index<MAXIMUM_NUMBER_OF_ACTOR_PATHS; ++path_index)
+	{
+		struct path_debug_storage const *path = &actor_path_debug_array[path_index];
+		
+		if (path->actor_index==actor_index && !path->failure)
+		{
+			found_path_index = path_index;
+			break;
+		}
+
+		if (found_path_index==NONE && !path->valid)
+		{
+			found_path_index = path_index;
+		}
+	}
+
+	if (found_path_index==NONE)
+	{
+		short best_path_index = NONE;
+		long best_path_time = LONG_MAX;
+
+		for (path_index = 0; path_index<MAXIMUM_NUMBER_OF_ACTOR_PATHS; ++path_index)
+		{
+			struct path_debug_storage const *path = &actor_path_debug_array[path_index];
+		
+			match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 291, path->valid);
+
+			if (path->path_time < best_path_time)
+			{
+				best_path_time = path->path_time;
+				best_path_index = path_index;
+			}
+		}
+
+		found_path_index = best_path_index;
+	}
+
+	if (found_path_index!=NONE)
+	{
+		found_path = &actor_path_debug_array[found_path_index];
+
+		memset(found_path, 0, sizeof(*found_path));
+		found_path->valid = TRUE;
+		found_path->actor_index = actor_index;
+		found_path->path_time = game_time_get();
+	}
+
+	return found_path;
+}
+
+void ai_debug_select_encounter(
+	long encounter_index)
+{
+	if (ai_debug.selected_encounter_index != encounter_index)
+	{
+		ai_debug.selected_encounter_index = encounter_index;
+		ai_debug.firing_position_context_valid = FALSE;
+		memset(&ai_debug.field_7D384, 0, sizeof(ai_debug.field_7D384));
+		memset(&ai_debug.firing_positions, 0, sizeof(ai_debug.firing_positions));
+
+		ai_debug_select_actor(encounter_index, NONE);
+	}
+
+	return;
+}
+
+void ai_debug_select_actor(
+	long encounter_index,
+	long actor_index)
+{
+	if (ai_debug.selected_encounter_index != encounter_index
+	|| ai_debug.selected_actor_index != actor_index)
+	{
+		short firing_position_index;
+
+		ai_debug_select_encounter(encounter_index);
+		ai_debug.selected_actor_index = actor_index;
+		ai_debug.firing_position_context_valid = FALSE;
+	
+		for (firing_position_index = 0; firing_position_index<NUMBEROF(ai_debug.firing_positions); ++firing_position_index)
+		{
+			ai_debug.firing_positions[firing_position_index].evaluated = FALSE;
+		}
+
+		ai_debug.idle_look_valid = actor_index != NONE;
+		ai_debug.prop_idle_actor_index = actor_index;
+		ai_debug.prop_idle_look_count = 0;
+	}
+
+	return;
+}
+
+void ai_debug_sound_point_set(
+	void)
+{
+	return;
+}
+
+void ai_debug_lineoffire_new(
+	real_point3d const *origin,
+	real_vector3d const *vector)
+{
+	ai_debug.lineoffire_valid = TRUE;
+	ai_debug.lineoffire_success = FALSE;
+	ai_debug.lineoffire_origin = *origin;
+	ai_debug.lineoffire_vector = *vector;
+	ai_debug.lineoffire_numpills = 0;
+	return;
+}
+
+void ai_debug_lineoffire_addpill(
+	real_point3d const *base,
+	real_vector3d const *directedheight,
+	real width,
+	boolean hit)
+{
+	match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 4036, ai_debug.lineoffire_valid);
+
+	if (ai_debug.lineoffire_numpills<16)
+	{
+		ai_debug.lineoffire_pillhit[ai_debug.lineoffire_numpills] = hit;
+		ai_debug.lineoffire_pillbase[ai_debug.lineoffire_numpills] = *base;
+		ai_debug.lineoffire_pilldirectedheight[ai_debug.lineoffire_numpills] = *directedheight;
+		ai_debug.lineoffire_pillwidth[ai_debug.lineoffire_numpills++] = width;
+	}
+	return;
+}
+
+void ai_debug_lineoffire_success(
+	boolean success)
+{
+	ai_debug.lineoffire_success = success;
+	return;
 }
 
 boolean ai_debug_highlight_cluster(
@@ -248,26 +391,26 @@ boolean ai_debug_highlight_cluster(
 {
 	boolean result = FALSE;
 
-	if (ai_debug.render_encounter_activeregion && ai_debug.selected_squad_index!=NONE)
+	if (ai_debug.render_encounter_activeregion && ai_debug.selected_encounter_index!=NONE)
 	{
-		if (global_ai_debug_selected_squad_time != game_time_get() ||
-			global_ai_debug_selected_squad_index != ai_debug.selected_squad_index)
+		if (global_ai_debug_selected_encounter_time != game_time_get() ||
+			global_ai_debug_selected_encounter_index != ai_debug.selected_encounter_index)
 		{
 			encounter_compute_activation_cluster_bit_vector(
-				ai_debug.selected_squad_index,
+				ai_debug.selected_encounter_index,
 				FALSE,
 				SIZEOF_BITS(global_ai_debug_activation_cluster_bit_vector),
 				0,
 				global_ai_debug_activation_cluster_bit_vector);
-			global_ai_debug_selected_squad_time = game_time_get();
-			global_ai_debug_selected_squad_index = ai_debug.selected_squad_index;
+			global_ai_debug_selected_encounter_time = game_time_get();
+			global_ai_debug_selected_encounter_index = ai_debug.selected_encounter_index;
 		}
 
 		match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 4133, highlight_color);
 	
 		if (BIT_VECTOR_TEST_FLAG(global_ai_debug_activation_cluster_bit_vector, index))
 		{
-			if (encounter_get(ai_debug.selected_squad_index)->active)
+			if (encounter_get(ai_debug.selected_encounter_index)->active)
 			{
 				*highlight_color = global_real_argb_yellow;
 			}
@@ -285,6 +428,90 @@ boolean ai_debug_highlight_cluster(
 	}
 
 	return result;
+}
+
+void ai_debug_lineofsight_reset(
+	void)
+{
+	ai_debug.lineofsight_numpoints = 0;
+	ai_debug.field_42F0 = 0;
+	return;
+}
+
+char *ai_debug_describe_actor(
+	long actor_index,
+	long unit_index,
+	boolean include_squad,
+	char *buffer,
+	long bufsize)
+{
+	char const *tag_name;
+
+	char actor_string[256];
+	char object_name[256];
+
+	strcpy(actor_string, "");
+	
+	if (include_squad && actor_index!=NONE)
+	{
+		struct actor_datum *actor = actor_get(actor_index);
+		unit_index = actor->meta.unit_index;
+
+		if (actor->meta.encounter_index==NONE)
+		{
+			csstrcpy(actor_string, "encounterless ");
+		}
+		else
+		{
+			struct encounter_definition const *encounter_definition = TAG_BLOCK_GET_ELEMENT(
+				&global_scenario_get()->ai_encounters,
+				DATUM_INDEX_TO_ABSOLUTE_INDEX(actor->meta.encounter_index),
+				struct encounter_definition);
+			struct squad_definition const *squad_definition = TAG_BLOCK_GET_ELEMENT(
+					&encounter_definition->squads,
+					actor->meta.squad_index,
+					struct squad_definition);
+			struct platoon_definition const *platoon_definition = actor->meta.platoon_index!=NONE ?
+				TAG_BLOCK_GET_ELEMENT(&encounter_definition->platoons, actor->meta.platoon_index, struct platoon_definition) :
+				NULL;
+
+
+			if (platoon_definition==NULL)
+			{
+				sprintf(actor_string, "%s/%s ", encounter_definition->name, squad_definition->name);
+			}
+			else
+			{
+				sprintf(
+					actor_string,
+					"%s/(%s) %s ",
+					encounter_definition->name,
+					platoon_definition->name,
+					squad_definition->name);
+			}
+		}
+	}
+
+	tag_name = "";
+	strcpy(object_name, "");
+
+	if (unit_index!=NONE)
+	{
+		struct unit_datum const *unit = unit_get(unit_index);
+		struct unit_definition const *unit_definition = unit_definition_get(unit->definition_index);
+
+		tag_name = tag_name_strip_path(unit_definition->object.model.name);
+	
+		if (unit->object.name_index!=NONE)
+		{
+			struct scenario_object_name const *scenario_object_name = TAG_BLOCK_GET_ELEMENT(&global_scenario_get()->object_names, unit->object.name_index, struct scenario_object_name);
+			sprintf(object_name, " (%s)", scenario_object_name->name);
+		}
+	}
+
+	_snprintf(buffer, bufsize, "%s%s%s", actor_string, tag_name, object_name);
+
+	return buffer;
 }
 
 // TODO: remove this!!!!!
@@ -637,6 +864,7 @@ static void ai_debug_render_actor(
 							&actor_debug_info->ray_direction[ray_index],
 							1.f,
 							&point1);
+
 						render_debug_line(TRUE, &actor_debug_info->ray_origin[ray_index], &point0, global_real_argb_white);
 						render_debug_point(TRUE, &point0, 0.2f, color);
 						render_debug_line(TRUE, &point0, &point1, color);
@@ -672,8 +900,9 @@ static void ai_debug_render_actor(
 					if (ai_debug.render_vector_avoidance_rays)
 					{
 						real_argb_color const *color = global_real_argb_white;
+						short field_62F8 = actor_debug_info->field_62F8[i][j];
 
-						switch (actor_debug_info->field_62F8[i][j])
+						switch (field_62F8)
 						{
 						case 1:
 							color = global_real_argb_aqua;
@@ -683,7 +912,7 @@ static void ai_debug_render_actor(
 							break;
 						}
 
-						if (actor_debug_info->field_62F8[i][j]>0)
+						if (field_62F8>0)
 						{
 							real_point3d point0;
 							real_point3d point1;
@@ -698,6 +927,7 @@ static void ai_debug_render_actor(
 								&actor_debug_info->field_6418[i][j],
 								1.f,
 								&point1);
+
 							render_debug_line(TRUE, &actor_debug_info->field_6358[i][j], &point0, global_real_argb_blue);
 							render_debug_point(TRUE, &point0, 0.2f, color);
 							render_debug_line(TRUE, &point0, &point1, color);
@@ -712,7 +942,7 @@ static void ai_debug_render_actor(
 										temporary,
 										"%.3f",
 										actor_debug_info->avoid_t[i][j]),
-									global_real_argb_blue);
+									color);
 							}
 						}
 						else
@@ -722,7 +952,7 @@ static void ai_debug_render_actor(
 								&actor_debug_info->field_6358[i][j],
 								&actor_debug_info->field_6418[i][j],
 								1.f,
-								color);
+								global_real_argb_blue);
 
 							if (ai_debug.render_vector_avoidance_clear_time)
 							{
@@ -895,11 +1125,11 @@ static void ai_debug_render_actor(
 
 				if (actor->meta.encounter_index!=NONE)
 				{
-					struct encounter_definition *encounter_definition = TAG_BLOCK_GET_ELEMENT(
+					struct encounter_definition const *encounter_definition = TAG_BLOCK_GET_ELEMENT(
 						&global_scenario_get()->ai_encounters,
 						DATUM_INDEX_TO_ABSOLUTE_INDEX(actor->meta.encounter_index),
 						struct encounter_definition);
-					struct encounter_datum *encounter = encounter_get(actor->meta.encounter_index);
+					struct encounter_datum const *encounter = encounter_get(actor->meta.encounter_index);
 					boolean outside_current_bsp = FALSE;
 
 
@@ -1231,7 +1461,7 @@ static void ai_debug_render_actor(
 				"unused9"
 			};
 
-			render_debug_string_at_point(TRUE, ai_debug_drawstack(), actor->meta.team_index!=NONE ? teams[actor->meta.team_index] : "none", global_real_argb_green);
+			render_debug_string_at_point(TRUE, ai_debug_drawstack(), actor->meta.team_index==NONE ? "none" : teams[actor->meta.team_index], global_real_argb_green);
 		}
 
 		/* Player ratings */
@@ -1767,7 +1997,7 @@ static void ai_debug_render_actor(
 			struct prop_datum *prop = prop_get(actor->target.target_prop_index);
 			real_argb_color const *target_color = global_real_argb_white;
 
-			switch (actor->target.target_type-1)
+			switch (actor->target.target_type)
 			{
 			case _actor_target_partial_enemy:
 				target_color = global_real_argb_grey;
@@ -1849,11 +2079,11 @@ static void ai_debug_render_actor(
 			if (actor->meta.encounter_index!=NONE)
 			{
 				struct encounter_datum *encounter = encounter_get(actor->meta.encounter_index);
-				struct encounter_definition *encounter_definition = TAG_BLOCK_GET_ELEMENT(
+				struct encounter_definition const *encounter_definition = TAG_BLOCK_GET_ELEMENT(
 					&global_scenario_get()->ai_encounters,
 					DATUM_INDEX_TO_ABSOLUTE_INDEX(actor->meta.encounter_index),
 					struct encounter_definition);
-				struct squad_definition *squad_definition = TAG_BLOCK_GET_ELEMENT(
+				struct squad_definition const *squad_definition = TAG_BLOCK_GET_ELEMENT(
 					&encounter_definition->squads,
 					actor->meta.squad_index,
 					struct squad_definition);
@@ -1886,7 +2116,7 @@ static void ai_debug_render_actor(
 			switch (actor->state.action)
 			{
 			case _actor_action_flee:
-				if (actor->state.action_data.flee.has_approach_point>0)
+				if (actor->state.action_data.flee.has_approach_point)
 				{
 					render_debug_sphere(TRUE, &actor->state.action_data.flee.approach_point, 0.25f, actor_action_debug_color(actor_index));
 				}
@@ -2673,7 +2903,7 @@ static void ai_debug_render_actor(
 
 			strcpy(temporary, "");
 
-			for (control_flag_bit = 0; control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS; ++control_flag_bit)
+			for (control_flag_bit = 0; control_flag_bit<flag_count; ++control_flag_bit)
 			{
 				if (TEST_FLAG(actor->output.control_flags, control_flag_bit))
 				{
@@ -2682,7 +2912,7 @@ static void ai_debug_render_actor(
 						strcat(temporary, " ");
 					}
 
-					if (control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS)
+					if (control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS-1)
 					{
 						strcat(temporary, control_flag_names[control_flag_bit]);
 					}
@@ -2707,7 +2937,7 @@ static void ai_debug_render_actor(
 
 			strcpy(temporary, "");
 
-			for (control_flag_bit = 0; control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS; ++control_flag_bit)
+			for (control_flag_bit = 0; control_flag_bit<flag_count; ++control_flag_bit)
 			{
 				if (TEST_FLAG(actor->output.persistent_control_flags, control_flag_bit))
 				{
@@ -2716,7 +2946,7 @@ static void ai_debug_render_actor(
 						csstrcat(temporary, " ");
 					}
 
-					if (control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS)
+					if (control_flag_bit<NUMBER_OF_UNIT_CONTROL_FLAGS-1)
 					{
 						strcat(temporary, control_flag_names[control_flag_bit]);
 					}
@@ -2882,7 +3112,7 @@ static void ai_debug_render_actor(
 				sprintf(temporary, "melee-cannotmove (%f)", actor_debug_info->field_194);
 				break;
 			case _charge_melee_success:
-				sprintf(temporary, "melee-success (%sairborne)", actor_debug_info->field_198 ? "not-" : "not-" );
+				sprintf(temporary, "melee-success (%sairborne)", actor_debug_info->field_198 ? "" : "not-" );
 				break;
 			case _charge_stalking_success:
 				csstrcpy(temporary, "stalking-success");
@@ -2954,22 +3184,22 @@ static void ai_debug_render_actor(
 			render_debug_sphere(TRUE, &actor_debug_info->field_D4, actor_debug_info->field_E0, global_real_argb_yellow);
 		
 			p1 = actor_debug_info->field_E4;
-			p0 = p1;
+			p0 = actor_debug_info->field_E4;
 
-			p0.x = p1.x - 0.2f;
-			p1.x = p1.x + 0.2f;
+			p0.x -= 0.2f;
+			p1.x += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_red);
 			
-			p0.x = p0.x + 0.2f;
-			p1.x = p1.x - 0.2f;
-			p0.y = p0.y - 0.2f;
-			p1.y = p1.y + 0.2f;
+			p0.x += 0.2f;
+			p1.x -= 0.2f;
+			p0.y -= 0.2f;
+			p1.y += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_red);
 			
-			p0.y = p0.y + 0.2f;
-			p1.y = p1.y - 0.2f;
-			p0.z = p0.z - 0.2f;
-			p1.z = p1.z + 0.2f;
+			p0.y += 0.2f;
+			p1.y -= 0.2f;
+			p0.z -= 0.2f;
+			p1.z += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_red);
 			vector_from_points3d(&actor_debug_info->field_C8, &actor_debug_info->field_E4, &v0);
 			point_from_line3d(&actor_debug_info->field_C8, &v0, actor_debug_info->field_F0, &p2);
@@ -2977,20 +3207,20 @@ static void ai_debug_render_actor(
 			p1 = p2;
 			p0 = p2;
 
-			p0.x = p2.x - 0.2f;
-			p1.x = p2.x + 0.2f;
+			p0.x -= 0.2f;
+			p1.x += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
-			p0.x = p0.x + 0.2f;
-			p1.x = p1.x - 0.2f;
-			p0.y = p0.y - 0.2f;
-			p1.y = p1.y + 0.2f;
+			p0.x += 0.2f;
+			p1.x -= 0.2f;
+			p0.y -= 0.2f;
+			p1.y += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
-			p0.y = p0.y + 0.2f;
-			p1.y = p1.y - 0.2f;
-			p0.z = p0.z - 0.2f;
-			p1.z = p1.z + 0.2f;
+			p0.y += 0.2f;
+			p1.y -= 0.2f;
+			p0.z -= 0.2f;
+			p1.z += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 
 			if (actor_debug_info->field_F4)
@@ -3002,22 +3232,22 @@ static void ai_debug_render_actor(
 				render_debug_line(TRUE, &actor_debug_info->field_C8, &actor_debug_info->field_F8, global_real_argb_red);
 				
 				p4 = actor_debug_info->field_F8;
-				p3 = p4;
+				p3 = actor_debug_info->field_F8;
 				
-				p3.x = p4.x - 0.2f;
-				p4.x = p4.x + 0.2f;
+				p3.x -= 0.2f;
+				p4.x += 0.2f;
 				render_debug_line(TRUE, &p3, &p4, global_real_argb_blue);
 				
-				p3.x = p3.x + 0.2f;
-				p4.x = p4.x - 0.2f;
-				p3.y = p3.y - 0.2f;
-				p4.y = p4.y + 0.2f;
+				p3.x += 0.2f;
+				p4.x -= 0.2f;
+				p3.y -= 0.2f;
+				p4.y += 0.2f;
 				render_debug_line(TRUE, &p3, &p4, global_real_argb_blue);
 				
-				p3.y = p3.y + 0.2f;
-				p4.y = p4.y - 0.2f;
-				p3.z = p3.z - 0.2f;
-				p4.z = p4.z + 0.2f;
+				p3.y += 0.2f;
+				p4.y -= 0.2f;
+				p3.z -= 0.2f;
+				p4.z += 0.2f;
 				render_debug_line(TRUE, &p3, &p4, global_real_argb_blue);
 			}
 		}
@@ -3032,22 +3262,22 @@ static void ai_debug_render_actor(
 			real_point3d p1;
 
 			p1 = actor_debug_info->field_64;
-			p0 = p1;
+			p0 = actor_debug_info->field_64;
 			
-			p0.x = p1.x - 0.2f;
-			p1.x = p1.x + 0.2f;
+			p0.x -= 0.2f;
+			p1.x += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
-			p0.x = p0.x + 0.2f;
-			p1.x = p1.x - 0.2f;
-			p0.y = p0.y - 0.2f;
-			p1.y = p1.y + 0.2f;
+			p0.x += 0.2f;
+			p1.x -= 0.2f;
+			p0.y -= 0.2f;
+			p1.y += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
-			p0.y = p0.y + 0.2f;
-			p1.y = p1.y - 0.2f;
-			p0.z = p0.z - 0.2f;
-			p1.z = p1.z + 0.2f;
+			p0.y += 0.2f;
+			p1.y -= 0.2f;
+			p0.z -= 0.2f;
+			p1.z += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
 			render_debug_vector(
@@ -3103,20 +3333,20 @@ static void ai_debug_render_actor(
 			p1.z = actor->control.desired_aiming_vector.k;
 			p0 = p1;
 
-			p0.x = p1.x - 0.2f;
-			p1.x = p1.x + 0.2f;
+			p0.x -= 0.2f;
+			p1.x += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
-			p0.x = p0.x + 0.2f;
-			p1.x = p1.x - 0.2f;
-			p0.y = p0.y - 0.2f;
-			p1.y = p1.y + 0.2f;
+			p0.x += 0.2f;
+			p1.x -= 0.2f;
+			p0.y -= 0.2f;
+			p1.y += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 
-			p0.y = p0.y + 0.2f;
-			p1.y = p1.y - 0.2f;
-			p0.z = p0.z - 0.2f;
-			p1.z = p1.z + 0.2f;
+			p0.y += 0.2f;
+			p1.y -= 0.2f;
+			p0.z -= 0.2f;
+			p1.z += 0.2f;
 			render_debug_line(TRUE, &p0, &p1, global_real_argb_blue);
 			
 			render_debug_sphere(TRUE, &actor->control.burst_target, 0.1f, global_real_argb_red);

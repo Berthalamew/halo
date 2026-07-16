@@ -130,6 +130,7 @@ struct path_state
 	real closest_distance;
 	real closest_cost_estimate;
 	real_point3d closest_point;
+	char __unknown80[16384];
 	short node_count;
 	struct path_node node_list[PATH_NODE_LIST_SIZE];
 	short heap_count;
@@ -148,7 +149,7 @@ struct path_debug_storage
 	short path_traverse_result;
 	short path_build_result;
 	struct path_state path_state;
-	char __unknown[51676];
+	char __unknown[35292];
 };
 
 /* ---------- prototypes/EXAMPLE.C */

@@ -105,15 +105,51 @@ enum
 
 /* ---------- structures */
 
+struct ai_debug_unknown_state
+{
+	char __unknown0[1648];
+};
+
+struct ai_debug_firing_position
+{
+	boolean pursuit_position;
+	boolean evaluated;
+	char __unknown2[62];
+};
+
 struct ai_debug_state
 {
 	boolean enter_debugger;
 	boolean select_this_actor;
-	char __unknown02[16];
+	boolean fix_defending_guard_firing_positions;
+	boolean fix_actor_variants;
+	boolean debug_fast_los;
+	boolean debug_evaluate_all_positions;
+	boolean debug_ignore_player;
+	boolean debug_invisible_player;
+	boolean debug_flee_always;
+	boolean debug_force_all_active;
+	boolean debug_disable_wounded_sounds;
+	boolean debug_blind;
+	boolean debug_deaf;
+	boolean force_vocalizations;
+	boolean force_crouch;
+	boolean path_disable_obstacle_avoidance;
+	boolean path_disable_smoothing;
+	boolean field_11;
 	char selected_squad_name[32];
-	int selected_squad_index;
-	int selected_actor_index;
-	char __unknown3C[105];
+	long selected_encounter_index;
+	long selected_actor_index;
+	boolean path_enable;
+	boolean path_start_freeze;
+	boolean path_end_freeze;
+	boolean path_flood;
+	real path_maximum_radius;
+	boolean path_attractor;
+	real path_attractor_radius;
+	real path_attractor_weight;
+	real path_accept_radius;
+	char __unknown3C[81];
 	boolean render;
 	boolean render_all_actors;
 	boolean render_inactive_actors;
@@ -193,7 +229,34 @@ struct ai_debug_state
 	boolean render_vector_avoidance_intermediate;
 	boolean render_postcombat;
 	long last_render_id;
-	char __unknownF8[547380];
+	boolean lineoffire_valid;
+	boolean lineoffire_success;
+	real_point3d lineoffire_origin;
+	real_vector3d lineoffire_vector;
+	long lineoffire_numpills;
+	boolean lineoffire_pillhit[16];
+	real_point3d lineoffire_pillbase[16];
+	real_vector3d lineoffire_pilldirectedheight[16];
+	real lineoffire_pillwidth[16];
+	boolean lineofsight_overflow;
+	long lineofsight_numpoints;
+	char __unknown2F0[262144];
+	long field_42F0;
+	char __unknown42F4[50472];
+	struct path_state path_state;
+	struct path_result path;
+	struct path_debug_storage path_debug;
+	boolean firing_position_context_valid;
+	byte pad[3];
+	struct ai_debug_unknown_state field_7D384;
+	struct ai_debug_firing_position firing_positions[512];
+	char __unknown859F4[32];
+	boolean idle_look_valid;
+	long prop_idle_actor_index;
+	short prop_idle_look_count;
+	long prop_idle_look_indicies[32];
+	real prop_idle_look_distances[32];
+	char __unknown85B20[12];
 };
 
 struct actor_debug_info
@@ -308,18 +371,27 @@ struct actor_debug_info
 /* ---------- prototypes/AI_DEBUG.C */
 
 void ai_debug_initialize(void);
+void ai_debug_dispose(void);
+void ai_debug_dispose_from_old_map(void);
+void ai_debug_clear_storage(void);
+void ai_debug_actor_deleted(long actor_index);
+struct path_debug_storage *ai_debug_get_last_path(long actor_index);
+struct path_debug_storage *ai_debug_get_path_storage(long actor_index);
+void ai_debug_select_encounter(long encounter_index);
+void ai_debug_select_actor(long encounter_index, long actor_index);
+void ai_debug_sound_point_set(void);
+void ai_debug_lineoffire_new(real_point3d const *origin, real_vector3d const *vector);
+void ai_debug_lineoffire_addpill(real_point3d const *base, real_vector3d const *directedheight, real width, boolean hit);
+void ai_debug_lineoffire_success(boolean success);
+boolean ai_debug_highlight_cluster(short index, real_argb_color const **highlight_color);
+void ai_debug_lineofsight_reset(void);
+char *ai_debug_describe_actor(long actor_index, long unit_index, boolean include_squad, char *buffer, long bufsize);
+
+void ai_debug_change_selected_encounter(boolean search_forwards);
+void ai_debug_change_selected_actor(boolean search_forwards);
 
 void ai_debug_initialize_for_new_map(void);
 
-void ai_debug_change_selected_encounter(boolean a1);
-
-void ai_debug_change_selected_actor(boolean a1);
-
-char *ai_debug_describe_actor(long actor_index, long unit_index, boolean include_squad, char *buffer, long bufsize);
-
-struct path_debug_storage *ai_debug_get_last_path(long);
-
-boolean ai_debug_highlight_cluster(short index, real_argb_color const **highlight_color);
 
 /* ---------- globals */
 

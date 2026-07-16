@@ -111,6 +111,26 @@ struct squad_definition
 	struct tag_block unused_block;
 };
 
+struct platoon_rule
+{
+	short rule_type;
+	short platoon_index;
+	long pad;
+};
+
+struct platoon_definition
+{
+	char name[TAG_STRING_LENGTH+1];
+	unsigned long flags;
+	unsigned long unused1[3];
+	struct platoon_rule attacking_defending_rule;
+	unsigned long unused2;
+	struct platoon_rule maneuvering_rule;
+	unsigned long unused3;
+	unsigned long unused4[16];
+	struct tag_block unused_blocks[3];
+};
+
 struct encounter_definition
 {
 	char name[TAG_STRING_LENGTH+1];
@@ -124,7 +144,7 @@ struct encounter_definition
 	unsigned long unused[18];
 	word pad2;
 	short runtime_structure_bsp_reference_index;
-	struct tag_block squads;
+	struct tag_block squads;					// struct squad_definition
 	struct tag_block platoons;
 	struct tag_block firing_positions;
 	struct tag_block player_starting_locations;
