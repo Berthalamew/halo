@@ -11,6 +11,7 @@ header included in hcex build.
 /* ---------- headers */
 
 #include "tag_files/tag_groups.h"
+#include "real_math.h"
 
 /* ---------- constants */
 
@@ -18,12 +19,20 @@ header included in hcex build.
 
 /* ---------- structures */
 
+struct bsp2d_node
+{
+	struct real_plane2d plane;
+	long child_indices[2];
+};
+
 struct bsp2d
 {
 	struct tag_block nodes;
 };
 
-/* ---------- prototypes/EXAMPLE.C */
+/* ---------- prototypes/BSP2D.C */
+
+long bsp2d_test_point(struct bsp2d const *bsp, real_point2d const *point, long child_index);
 
 /* ---------- globals */
 
