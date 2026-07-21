@@ -112,16 +112,338 @@ symbols in this file:
 
 /* ---------- headers */
 
+#include "cseries.h"
+#include "cseries_windows.h"
+#include "collision_usage.h"
+#include "real_math.h"
+#include "integer_math.h"
+#include "game.h"
+#include "editor_stubs.h"
+
 /* ---------- constants */
+
+enum
+{
+	NUMBER_OF_COLLISION_TIME_PERIODS = 3
+};
 
 /* ---------- macros */
 
 /* ---------- structures */
 
+struct collision_log
+{
+	long calls;
+	__int64 elapsed_time;
+};
+
+struct collision_function
+{
+	struct collision_log total_all_users;
+	struct collision_log usage_by_user[NUMBER_OF_COLLISION_USER_TYPES];
+};
+
+struct collision_period
+{
+	boolean reset_upon_next_use;
+	boolean valid;
+	long period_count;
+	struct collision_function function[NUMBER_OF_COLLISION_FUNCTION_TYPES];
+};
+
+struct collision_overall_usage
+{
+	short user_type;
+	unsigned short pad;
+	struct collision_log total_all_periods;
+	struct collision_log usage_by_period[7];
+};
+
 /* ---------- prototypes */
 
 /* ---------- globals */
 
+boolean global_collision_log_enable = TRUE;
+
+short global_current_collision_user_depth = 0;
+short global_current_collision_users[MAXIMUM_COLLISION_USER_STACK_DEPTH];
+
+boolean collision_log_render_enable = FALSE;
+boolean collision_log_detailed = FALSE;
+boolean collision_log_extended = FALSE;
+boolean collision_log_totals_only = FALSE;
+boolean collision_log_time = FALSE;
+
+const char *global_collision_function_names[] =
+{
+	"vector-structure",
+	"vector-objects",
+	"features-in-sphere",
+	"model-vector",
+	"object-bsp-vector",
+	"structure-bsp-vector",
+	"object-bsp-sphere",
+	"structure-bsp-sphere",
+	NULL
+};
+
+const char *global_collision_user_names[] =
+{
+	"????",
+	"ai-look",
+	"ai-los",
+	"ai-comm",
+	"ai-fire",
+	"ai-melee",
+	"aim",
+	"biped",
+	"melee",
+	"decal",
+	"areadmg",
+	"item",
+	"obsrv",
+	"pt-phys",
+	"proj",
+	"light",
+	"sound",
+	"veh",
+	"limp",
+	"object",
+	"ui",
+	"debug",
+	NULL
+};
+
+// extern bool global_collision_log_switch_pending; // 0x181812016
+// extern bool global_collision_log_switch_pending_value; // 0x181812017
+// extern short global_collision_period_depth; // 0x181812060
+// extern short global_collision_periods[8]; // 0x181812068
+// extern collision_period collision_usage_current; // 0x181812080
+// extern collision_period collision_usage_this_frame_buffer[8]; // 0x181813650
+// extern collision_period collision_usage_last_frame_buffer[8]; // 0x18181E490
+
+short collision_usage_current_period = NONE;
+struct collision_period collision_usage_buffer[NUMBER_OF_COLLISION_TIME_PERIODS];
+
+struct collision_period collision_usage_current;
+
 /* ---------- public code */
+
+void collision_log_initialize(
+	void)
+{
+	memset(&collision_usage_buffer, 0, sizeof(collision_usage_buffer));
+	
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 150, global_current_collision_user_depth < MAXIMUM_COLLISION_USER_STACK_DEPTH);
+
+	global_current_collision_users[global_current_collision_user_depth] = 0;
+	global_current_collision_user_depth = global_current_collision_user_depth + 1;
+
+	return;
+}
+
+void collision_log_enable(
+	boolean enable)
+{
+	global_collision_log_enable = enable;
+
+	return;
+}
+
+static void collision_log_store_period(
+	short time_period,
+	boolean unused)
+{
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 167, collision_usage_current_period == NONE);
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 168, (time_period >= 0) && (time_period < NUMBER_OF_COLLISION_TIME_PERIODS));
+
+	memset(&collision_usage_current, 0, sizeof(collision_usage_current));
+	collision_usage_current_period = time_period;
+}
+
+void collision_log_begin_period(
+	short time_period)
+{
+	short current_period;
+
+	collision_log_store_period(time_period, TRUE);
+
+	return;
+}
+
+void collision_log_continue_period(
+	short time_period)
+{
+	short current_period;
+
+	collision_log_store_period(time_period, FALSE);
+
+	return;
+}
+
+void collision_log_end_period(
+	void)
+{
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 198,
+		(collision_usage_current_period >= 0) && (collision_usage_current_period < NUMBER_OF_COLLISION_TIME_PERIODS));
+
+	collision_usage_current.reset_upon_next_use = TRUE;
+
+	collision_usage_buffer[collision_usage_current_period] = collision_usage_current;
+	collision_usage_current_period = NONE;
+
+	return;
+}
+
+void collision_log_format_usage(
+	__int64 aaa,
+	const struct collision_log *usage,
+	char *buffer)
+{
+	if ( collision_log_time )
+	{
+		float milliseconds;
+		__int64 frequency;
+
+		QueryPerformanceFrequency((PLARGE_INTEGER)&frequency);
+
+		milliseconds = aaa;
+		sprintf(buffer, "%d/%.2f", usage->calls, milliseconds * 1000.0f / (double)frequency);
+
+		return;
+	}
+
+	sprintf(buffer, "%d", usage->calls);
+
+	return;
+}
+
+void collision_log_render(
+	void)
+{
+	if (collision_log_render_enable)
+	{
+		char linebuf[2048];
+		short function_index;
+		rectangle2d frame_bounds;
+		short debug_string_position;
+
+		for (function_index = 0; function_index < NUMBER_OF_COLLISION_FUNCTION_TYPES; function_index++)
+		{
+			boolean recorded;
+			short time_period_index;
+
+			{
+				struct collision_overall_usage total_usage;
+				struct collision_overall_usage overall_usage[28];
+
+				{
+				    short user_type_index;
+				}
+
+				{
+				    char tempstring[512];
+				    {
+				        char tempbuf[256];
+				    }
+				    {
+				        char tempbuf[256];
+				    }
+				}
+
+				{
+				    short index;
+				    {
+				        short user_index;
+				        {
+				            char tempbuf[256];
+				        }
+				        {
+				            char tempbuf[256];
+				        }
+				    }
+				}
+
+				{
+				    rectangle2d bounds;
+				    point2d cursor;
+				}
+			}
+		}
+		//function call : void (void *, unsigned long long, unsigned long long, __int32 (*)(void const *, void const *))
+	}
+
+	return;
+}
+
+static long collision_log_get_current_user(
+	short collision_function)
+{
+	short user;
+
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 403, global_current_collision_user_depth > 0);
+
+	user = global_current_collision_users[global_current_collision_user_depth];
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 406, (user >= 0) && (user < NUMBER_OF_COLLISION_USER_TYPES));
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 407,
+		(collision_function >= 0) && (collision_function < NUMBER_OF_COLLISION_FUNCTION_TYPES));
+
+	if (!game_in_progress() || game_in_editor() || !global_collision_log_enable)
+	{
+		return NONE;
+	}
+
+	if (collision_usage_current_period == NONE)
+	{
+		return NONE;
+	}
+
+	match_assert("c:\\halo\\SOURCE\\physics\\collision_usage.c", 424,
+		(collision_usage_current_period >= 0) && (collision_usage_current_period < NUMBER_OF_COLLISION_TIME_PERIODS));
+
+	return user;
+}
+
+void collision_log_start_time(
+	__int64 *start_time)
+{
+	QueryPerformanceCounter((PLARGE_INTEGER)start_time);
+
+	return;
+}
+
+void collision_log_end_time(
+	short collision_function,
+	__int64 start_time)
+{
+	__int64 end_time;
+	short user;
+
+	QueryPerformanceCounter((PLARGE_INTEGER)&end_time);
+
+	user = collision_log_get_current_user(collision_function);
+
+	if (user != NONE)
+	{
+		__int64 elapsed_time = end_time - start_time;
+
+		collision_usage_current.function[collision_function].total_all_users.elapsed_time += elapsed_time;
+		collision_usage_current.function[collision_function].usage_by_user[user].elapsed_time += elapsed_time;
+	}
+
+	return;
+}
+
+void collision_log_usage(
+	short collision_function)
+{
+	return;
+}
+
+void collision_log_display(
+	char *buffer)
+{
+	return;
+}
 
 /* ---------- private code */
