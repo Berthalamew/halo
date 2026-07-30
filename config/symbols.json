@@ -22443,7 +22443,7 @@
 { "file_offset": 4537184, "flags": 0, "name": "_event_manager_globals" },
 { "file_offset": 4537544, "flags": 0, "name": "_bss_00453cc8" },
 { "file_offset": 4537548, "flags": 0, "name": "_bss_00453ccc" },
-{ "file_offset": 4537552, "flags": 0, "name": "_bss_00453cd0" },
+{ "file_offset": 4537552, "flags": 0, "name": "_overhead_map_globals" },
 { "file_offset": 4537600, "flags": 0, "name": "_player_ui_globals" },
 { "file_offset": 4538416, "flags": 0, "name": "_bss_00454030" },
 { "file_offset": 4538888, "flags": 0, "name": "_progress_bar_mode" },
