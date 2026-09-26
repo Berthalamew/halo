@@ -12,12 +12,12 @@ header included in hcex build.
 
 #include "cseries.h"
 #include "math/real_math.h"
+#include "physics/collision_bsp.h"
 
 /* ---------- constants */
 
 enum
 {
-	MAXIMUM_COLLISION_FEATURES_PER_TEST = 256,
 	MAXIMUM_POINTS_PER_COLLISION_PRISM = 8,
 };
 
