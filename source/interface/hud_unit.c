@@ -18,6 +18,7 @@ HUD_UNIT.C
 #include "render.h"
 #include "player_effects.h"
 #include "motion_sensor.h"
+#include "bitmaps_inlines.h"
 
 /* ---------- constants */
 
@@ -283,7 +284,7 @@ void hud_render_damage_indicators(
 						theta = 3.f * _pi / 2.f;
 						break;
 					default:
-						match_assert("c:\\halo\\SOURCE\\interface\\hud_unit.c", 1024, !"unreachable");
+						match_unreachable("c:\\halo\\SOURCE\\interface\\hud_unit.c", 1024);
 						break;
 					}
 
