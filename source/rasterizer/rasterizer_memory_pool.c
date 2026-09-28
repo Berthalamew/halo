@@ -18,8 +18,8 @@ RASTERIZER_MEMORY_POOL.C
 /* ---------- globals */
 
 /* swapped? */
-static void *global_memory_pool;
-static long global_memory_index;
+static void *global_memory_pool = NULL;
+static long global_memory_index = 0;
 
 /* ---------- public code */
 
