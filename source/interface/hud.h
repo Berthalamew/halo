@@ -8,10 +8,9 @@ header included in hcex build.
 #define __HUD_H
 #pragma once
 
-#include "bitmaps.h"
+/* ---------- headers */
+
 #include "hud_definitions.h"
-#include "integer_math.h"
-#include "real_math.h"
 
 /* ---------- constants */
 

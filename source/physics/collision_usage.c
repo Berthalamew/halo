@@ -6,10 +6,7 @@ COLLISION_USAGE.C
 /* ---------- headers */
 
 #include "cseries.h"
-#include "cseries_windows.h"
 #include "collision_usage.h"
-#include "real_math.h"
-#include "integer_math.h"
 #include "game.h"
 #include "editor_stubs.h"
 #include "rasterizer.h"

@@ -10,26 +10,43 @@ header included in hcex build.
 
 /* ---------- headers */
 
-#include "math/real_math.h"
-#include "math/integer_math.h"
-
 /* ---------- constants */
+
+enum
+{
+	MAXIMUM_RENDERED_DISTANT_LIGHTS = 2,
+	MAXIMUM_RENDERED_POINT_LIGHTS = 2,
+	MAXIMUM_RENDERED_ENVIRONMENT_SURFACES = 16384,
+	MAXIMUM_RENDERED_CLUSTERS = 128,
+	MAXIMUM_SURFACES_PER_STRUCTURE = 0x20000,
+	MAXIMUM_RENDERED_LIGHTS = 128,
+	MAXIMUM_LIGHTS_PER_MAP = 896,
+	MAXIMUM_LENS_FLARES_PER_LIGHT = 8,
+	MAXIMUM_QUEUED_LENS_FLARES = 8,
+};
 
 /* ---------- macros */
 
 /* ---------- structures */
 
-struct render_screen_flash
+struct render_distant_light
 {
-	short type;
-	real intensity;
-	real_argb_color color;
+	real_rgb_color color;
+	real_vector3d direction;
 };
 
-struct render_screen_effect
+struct render_lighting
 {
-	short type;
-	real intensity;
+	real_rgb_color ambient_color;
+	short distant_light_count;
+	word pad;
+	struct render_distant_light distant_lights[MAXIMUM_RENDERED_DISTANT_LIGHTS];
+	short point_light_count;
+	word pad1;
+	long point_light_indices[MAXIMUM_RENDERED_POINT_LIGHTS];
+	real_argb_color reflection_tint_color;
+	real_vector3d shadow_vector;
+	real_rgb_color shadow_color;
 };
 
 struct render_camera

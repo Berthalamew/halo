@@ -92,6 +92,15 @@ symbols in this file:
 
 /* ---------- headers */
 
+#include "cseries.h"
+#include "collisions.h"
+#include "physics.h"
+#include "collision_models.h"
+#include "render.h"
+#include "bipeds.h"
+#include "structures.h"
+#include "fog_definitions.h"
+
 /* ---------- constants */
 
 /* ---------- macros */

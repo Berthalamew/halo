@@ -10,8 +10,7 @@ file has inline function assertions.
 
 /* ---------- headers */
 
-#include "integer_math.h"
-#include "real_math.h"
+#include "bitmap_macros.h"
 
 /* ---------- constants */
 

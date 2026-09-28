@@ -11,9 +11,9 @@ CSERIES.H
 #include <StdDef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <math.h>
 #include <string.h>
-#include <stdarg.h>
 
 /* ---------- constants */
 
@@ -85,8 +85,19 @@ enum
 	NUMBER_OF_POINTS_PER_RECTANGLE = 4,
 };
 
-
 #define NONE -1
+
+enum
+{
+	_german = 0,
+	_french,
+	_spanish,
+	_italian,
+	_english,
+	_japanese,
+	_unknown,
+	NUMBER_OF_SUPPORTED_LANGUAGES,
+};
 
 /* ---------- macros */
 
@@ -161,6 +172,15 @@ typedef byte boolean;
 
 typedef unsigned long tag;
 
+/* ---------- structures */
+
+struct location
+{
+	long leaf_index;
+	short cluster_index;
+	word bonus;
+};
+
 /* ---------- prototypes/CSERIES.C */
 
 void cseries_initialize(void);
@@ -217,7 +237,6 @@ void stack_walk_disregard_symbol_names(boolean disregard);
 
 /* ---------- macros */
 
-#ifndef BUILDING_CSERIES
 #define memcmp csmemcmp
 #define memmove csmemmove
 #define memset csmemset
@@ -238,7 +257,6 @@ void stack_walk_disregard_symbol_names(boolean disregard);
 #define malloc(size) match_malloc(__FILE__, __LINE__, size)
 #define free(ptr) match_free(__FILE__, __LINE__, ptr)
 #define realloc(ptr, size) match_realloc(__FILE__, __LINE__, ptr, size)
-#endif
 
 /* ---------- globals */
 

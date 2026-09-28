@@ -5,23 +5,13 @@ COLLISION_DEBUG.C
 /* ---------- headers */
 
 #include "cseries.h"
-#include "game/game.h"
-#include "game/players.h"
-#include "math/real_math.h"
-#include "physics/breakable_surfaces.h"
-#include "physics/collision_bsp.h"
-#include "physics/collision_bsp_definitions.h"
-#include "physics/collision_debug.h"
-#include "physics/collision_features.h"
-#include "physics/collision_model_definitions.h"
-#include "physics/collision_models.h"
-#include "physics/collision_usage.h"
-#include "physics/collisions.h"
-#include "render/render.h"
-#include "render/render_debug.h"
-#include "scenario/scenario.h"
-#include "tag_files/tag_groups.h"
-#include "game_globals.h"
+#include "collision_debug.h"
+#include "collisions.h"
+#include "collision_models.h"
+#include "objects.h"
+#include "render.h"
+#include "players.h"
+#include "render_debug.h"
 
 /* ---------- constants */
 

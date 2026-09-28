@@ -10,9 +10,15 @@ header included in hcex build.
 
 /* ---------- headers */
 
-#include "game/game.h"
+#include "game.h"
+#include "network_game_manager.h"
 
 /* ---------- constants */
+
+enum
+{
+	MAXIMUM_NUMBER_OF_LOCAL_PLAYERS = 4,
+};
 
 enum
 {

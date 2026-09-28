@@ -67,9 +67,14 @@ symbols in this file:
 /* ---------- headers */
 
 #include "cseries.h"
-#include "cseries_windows.h"
-#include "real_math.h"
-#include "game.h"
+#include "players.h"
+#include "network_game_globals.h"
+#include "units.h"
+#include "input.h"
+#include "console.h"
+#include "game_state.h"
+#include "network_messages.h"
+#include "network_server_manager.h"
 
 /* ---------- constants */
 

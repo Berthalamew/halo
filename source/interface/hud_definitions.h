@@ -8,10 +8,6 @@ HUD_DEFINITIONS.H
 
 /* ---------- headers */
 
-#include "integer_math.h"
-#include "real_math.h"
-#include "tag_files.h"
-#include "tag_groups.h"
 
 /* ---------- constants */
 
@@ -21,6 +17,13 @@ enum
 	_hud_draw_disabled_bit,
 	_hud_draw_in_multiplayer_bit,
 	NUMBER_OF_HUD_DRAW_FLAGS,
+};
+
+enum
+{
+	MAXIMUM_NUMBER_OF_HUD_SOUNDS = 12,
+	MAXIMUM_NUMBER_OF_WAYPOINTS = 16,
+	MAXIMUM_NUMBER_OF_HUD_DECIMAL_DIGITS = 4,
 };
 
 enum

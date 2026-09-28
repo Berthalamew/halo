@@ -96,6 +96,15 @@ symbols in this file:
 
 #include "cseries.h"
 #include "physics.h"
+#include "collisions.h"
+#include "physics_constants.h"
+#include "collision_models.h"
+#include "terrain_definitions.h"
+#include "render.h"
+#include "vehicles.h"
+#include "render_debug.h"
+#include "bipeds.h"
+#include "structures.h"
 
 /* ---------- constants */
 

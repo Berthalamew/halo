@@ -6,21 +6,15 @@ HUD_NAV_POINTS.C
 
 #include "cseries.h"
 #include "hud.h"
-#include "errors.h"
-#include "data.h"
-#include "game_state.h"
-#include "players.h"
-#include "network_connection.h"
-#include "game_engine.h"
-#include "units.h"
-#include "scenario.h"
-#include "scenario_definitions.h"
 #include "render.h"
-#include "collisions.h"
-#include "collision_usage.h"
-#include "bitmaps.h"
+#include "network_game_globals.h"
+#include "units.h"
+#include "players.h"
 #include "bitmaps_inlines.h"
+#include "game_state.h"
+#include "collisions.h"
 #include "texture_cache.h"
+#include "physics_constants.h"
 
 /* ---------- constants */
 

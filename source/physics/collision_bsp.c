@@ -6,11 +6,12 @@ COLLISION_BSP.C
 
 #include "cseries.h"
 #include "collision_bsp.h"
-#include "collision_bsp_definitions.h"
-
+#include "collisions.h"
+#include "objects.h"
+#ifdef DEBUG
 #include "render_debug.h"
-#include "collision_usage.h"
-#include "scenario.h"
+#endif
+
 
 /* ---------- structures */
 

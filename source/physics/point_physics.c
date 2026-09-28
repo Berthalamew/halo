@@ -5,14 +5,12 @@ POINT_PHYSICS.C
 /* ---------- headers */
 
 #include "cseries.h"
-#include "real_math.h"
 #include "point_physics.h"
-#include "physics.h"
 #include "collisions.h"
-#include "collision_usage.h"
+#include "physics_constants.h"
+#include "physics.h"
 #include "objects.h"
 #include "render_debug.h"
-#include "scenario.h"
 
 /* ---------- constants */
 
