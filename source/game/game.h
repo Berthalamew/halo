@@ -54,6 +54,15 @@ enum
 
 /* ---------- structures */
 
+struct game_options
+{
+	unsigned long flags;
+	short code_version;
+	short difficulty;
+	unsigned long random_seed;
+	char map_name[MAXIMUM_FILENAME_LENGTH+1];
+};
+
 struct slayer_statistics
 {
 	short ignored;
