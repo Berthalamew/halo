@@ -168,7 +168,7 @@ TIFFFdOpen(fd, name, mode)
 	m = getMode(mode, module);
 	if (m == -1)
 		goto bad2;
-	tif = (TIFF *)malloc(sizeof (TIFF) + strlen(name) + 1);
+	tif = (TIFF *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_open.c", 171, sizeof (TIFF) + strlen(name) + 1);
 	if (tif == NULL) {
 		TIFFError(module, "%s: Out of memory (TIFF structure)", name);
 		goto bad2;

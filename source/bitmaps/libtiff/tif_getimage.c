@@ -56,6 +56,10 @@ static	u_long **BWmap;
 static	u_long **PALmap;
 
 static	int gt();
+// halo decomp add
+static	int makebwmap(RGBvalue *);
+static	int makecmap(u_short *, u_short *, u_short *);
+// halo decomp end
 
 TIFFReadRGBAImage(tif, rwidth, rheight, raster, stop)
 	TIFF *tif;
@@ -111,9 +115,9 @@ TIFFReadRGBAImage(tif, rwidth, rheight, raster, stop)
 	PALmap = NULL;
 	ok = gt(tif, rwidth, height, raster + (rheight-height)*rwidth);
 	if (BWmap)
-		free((char *)BWmap);
+		match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 125, (char *)BWmap);
 	if (PALmap)
-		free((char *)PALmap);
+		match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 127, (char *)PALmap);
 	return (ok);
 }
 
@@ -167,7 +171,7 @@ gt(tif, w, h, raster)
 		register int x, range;
 
 		range = maxsamplevalue - minsamplevalue;
-		Map = (RGBvalue *)malloc((range + 1) * sizeof (RGBvalue));
+		Map = (RGBvalue *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 181, (range + 1) * sizeof (RGBvalue));
 		if (Map == NULL) {
 			TIFFError(filename,
 			    "No space for photometric conversion table");
@@ -188,7 +192,7 @@ gt(tif, w, h, raster)
 			if (!makebwmap(Map))
 				return (0);
 			/* no longer need Map, free it */
-			free((char *)Map);
+			match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 202, (char *)Map);
 			Map = NULL;
 		}
 		break;
@@ -234,7 +238,7 @@ gt(tif, w, h, raster)
 		    gtStripContig(tif, raster, Map, h, w);
 	}
 	if (Map)
-		free((char *)Map);
+		match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 248, (char *)Map);
 	return (e);
 }
 
@@ -302,7 +306,7 @@ gtTileContig(tif, raster, Map, h, w)
 	put = pickTileContigCase(Map);
 	if (put == 0)
 		return (0);
-	buf = (u_char *)malloc(TIFFTileSize(tif));
+	buf = (u_char *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 316, TIFFTileSize(tif));
 	if (buf == 0) {
 		TIFFError(filename, "No space for tile buffer");
 		return (0);
@@ -332,7 +336,7 @@ gtTileContig(tif, raster, Map, h, w)
 		}
 		y += (orientation == ORIENTATION_TOPLEFT ? -nrow : nrow);
 	}
-	free(buf);
+	match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 346, buf);
 	return (1);
 }
 
@@ -371,7 +375,7 @@ gtTileSeparate(tif, raster, Map, h, w)
 	if (put == 0)
 		return (0);
 	tilesize = TIFFTileSize(tif);
-	buf = (u_char *)malloc(3*tilesize);
+	buf = (u_char *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 376, 3*tilesize);
 	if (buf == 0) {
 		TIFFError(filename, "No space for tile buffer");
 		return (0);
@@ -407,7 +411,7 @@ gtTileSeparate(tif, raster, Map, h, w)
 		}
 		y += (orientation == ORIENTATION_TOPLEFT ? -nrow : nrow);
 	}
-	free(buf);
+	match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 412, buf);
 	return (1);
 }
 
@@ -435,7 +439,7 @@ gtStripContig(tif, raster, Map, h, w)
 	put = pickTileContigCase(Map);
 	if (put == 0)
 		return (0);
-	buf = (u_char *)malloc(TIFFStripSize(tif));
+	buf = (u_char *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 440, TIFFStripSize(tif));
 	if (buf == 0) {
 		TIFFError(filename, "No space for strip buffer");
 		return (0);
@@ -454,7 +458,7 @@ gtStripContig(tif, raster, Map, h, w)
 		(*put)(raster + y*w, buf, Map, w, nrow, fromskew, toskew);
 		y += (orientation == ORIENTATION_TOPLEFT ? -nrow : nrow);
 	}
-	free(buf);
+	match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 459, buf);
 	return (1);
 }
 
@@ -482,7 +486,7 @@ gtStripSeparate(tif, raster, Map, h, w)
 	int fromskew, toskew;
 
 	stripsize = TIFFStripSize(tif);
-	r = buf = (u_char *)malloc(3*stripsize);
+	r = buf = (u_char *)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 487, 3*stripsize);
 	if (buf == 0)
 		return (0);
 	g = r + stripsize;
@@ -512,7 +516,7 @@ gtStripSeparate(tif, raster, Map, h, w)
 		(*put)(raster + y*w, r, g, b, Map, w, nrow, fromskew, toskew);
 		y += (orientation == ORIENTATION_TOPLEFT ? -nrow : nrow);
 	}
-	free(buf);
+	match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 517, buf);
 	return (1);
 }
 
@@ -525,6 +529,9 @@ gtStripSeparate(tif, raster, Map, h, w)
  * pixel values simply by indexing into the table with one
  * number.
  */
+// halo decomp add
+static
+// halo decomp end
 makebwmap(Map)
 	RGBvalue *Map;
 {
@@ -532,7 +539,7 @@ makebwmap(Map)
 	int nsamples = 8 / bitspersample;
 	register u_long *p;
 
-	BWmap = (u_long **)malloc(
+	BWmap = (u_long **)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 538,
 	    256*sizeof (u_long *)+(256*nsamples*sizeof(u_long)));
 	if (BWmap == NULL) {
 		TIFFError(filename, "No space for B&W mapping table");
@@ -580,6 +587,9 @@ makebwmap(Map)
  * pixel values simply by indexing into the table with one
  * number.
  */
+// halo decomp add
+static
+// halo decomp end
 makecmap(rmap, gmap, bmap)
 	u_short *rmap, *gmap, *bmap;
 {
@@ -587,7 +597,7 @@ makecmap(rmap, gmap, bmap)
 	int nsamples = 8 / bitspersample;
 	register u_long *p;
 
-	PALmap = (u_long **)malloc(
+	PALmap = (u_long **)match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_getimage.c", 593,
 	    256*sizeof (u_long *)+(256*nsamples*sizeof(u_long)));
 	if (PALmap == NULL) {
 		TIFFError(filename, "No space for Palette mapping table");

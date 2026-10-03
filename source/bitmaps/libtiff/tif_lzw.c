@@ -305,7 +305,7 @@ LZWPreDecode(tif)
 	register int code;
 
 	if (sp == NULL) {
-		tif->tif_data = malloc(sizeof (LZWState));
+		tif->tif_data = match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_lzw.c", 308, sizeof (LZWState));
 		if (tif->tif_data == NULL) {
 			TIFFError("LZWPreDecode",
 			    "No space for LZW state block");
@@ -616,7 +616,7 @@ LZWPreEncode(tif)
 	register LZWState *sp = (LZWState *)tif->tif_data;
 
 	if (sp == NULL) {
-		tif->tif_data = malloc(sizeof (LZWState));
+		tif->tif_data = match_malloc("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_lzw.c", 619, sizeof (LZWState));
 		if (tif->tif_data == NULL) {
 			TIFFError("LZWPreEncode",
 			    "No space for LZW state block");
@@ -922,7 +922,7 @@ LZWCleanup(tif)
 	TIFF *tif;
 {
 	if (tif->tif_data) {
-		free(tif->tif_data);
+		match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_lzw.c", 925, tif->tif_data);
 		tif->tif_data = NULL;
 	}
 }

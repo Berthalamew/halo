@@ -50,11 +50,11 @@ TIFFClose(tif)
 		(*tif->tif_cleanup)(tif);
 	TIFFFreeDirectory(tif);
 	if (tif->tif_rawdata && (tif->tif_flags&TIFF_MYBUFFER))
-		free(tif->tif_rawdata);
+		match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_close.c", 55, tif->tif_rawdata);
 #ifdef MMAP_SUPPORT
 	if (isMapped(tif))
 		TIFFUnmapFileContents(tif->tif_base, tif->tif_size);
 #endif
 	(void) close(tif->tif_fd);
-	free((char *)tif);
+	match_free("c:\\halo\\SOURCE\\bitmaps\\libtiff\\tif_close.c", 61, (char *)tif);
 }
