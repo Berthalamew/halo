@@ -135,7 +135,7 @@ TAG_BLOCK_NAMED(name, #name, maximum_count, size, byte_swap_block, postprocess_b
 
 #define TAG_REFERENCE_DEFINITION(name, group_tag) struct tag_reference_definition name = { 0, (group_tag) }
 
-#define FIELD_CUSTOM(id)	((void *)(id))
+#define FIELD_CUSTOM(id) {_field_custom, NULL, (void *)(id)}
 #define FIELD_PAD(size) {_field_pad, NULL, (void *)(size)}
 
 #define TAG_ENUM(name, size)			\
